@@ -1,0 +1,27 @@
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+pydantic>=2.7.0
+python-multipart==0.0.9
+aiofiles==23.2.1
+python-dotenv==1.0.1
+
+# OCR - 这些可以后续单独安装，先去掉
+# paddleocr==2.9.1
+# paddlepaddle==3.0.0b2
+
+# 向量数据库（阶段2用）
+chromadb==0.4.24
+
+# LLM & Embedding
+openai==1.12.0
+anthropic==0.18.0
+transformers==4.39.1
+sentence-transformers==2.5.1
+torch==2.2.1
+
+# 数据库
+sqlalchemy==2.0.25
+
+# 工具
+psycopg2-binary==2.9.9
+alembic==1.13.1

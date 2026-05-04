@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>清理 ExamACE 数据</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 40px; text-align: center; }
+  h1 { color: #667eea; }
+  .btn { padding: 12px 24px; font-size: 16px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; }
+  .btn:hover { background: #764ba2; }
+  .log { margin-top: 20px; text-align: left; background: #f5f5f5; padding: 16px; border-radius: 8px; font-size: 13px; max-width: 600px; margin-left: auto; margin-right: auto; }
+  .ok { color: #52c41a; } .err { color: #f5222d; }
+</style>
+</head>
+<body>
+<h1>🧹 ExamACE 数据清理</h1>
+<button class="btn" onclick="run()">点击清理</button>
+<div id="log" class="log" style="display:none"></div>
+<script type="module">
+// Dynamic import of Dexie from the running app's node_modules won't work in browser
+// So we use the raw indexedDB API
+const DB_NAME = 'ExamAceDB';
+const log = document.getElementById('log');
+function append(msg, type) {
+  const p = document.createElement('p');
+  p.className = type || '';
+  p.textContent = msg;
+  log.appendChild(p);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+async function clearAllStores(db) {
+  const stores = ['subjects','chapters','knowledgePoints','documents','questions','questionKnowledgePoints','reviewRecords','reviewLogs','wrongQuestions'];
+  for (const store of stores) {
+    try {
+      const count = await new Promise((res, rej) => {
+        const req = db.transaction(store).objectStore(store).count();
+        req.onsuccess = () => res(req.result);
+        req.onerror = () => rej(req.error);
+      });
+      await new Promise((res, rej) => {
+        const req = db.transaction(store, 'readwrite').objectStore(store).clear();
+        req.onsuccess = () => res();
+        req.onerror = () => rej(req.error);
+      });
+      append(`✓ 已清空 ${store}（${count} 条）`, 'ok');
+    } catch(e) {
+      append(`✗ 清空 ${store} 失败: ${e.message}`, 'err');
+    }
+  }
+}
+
+window.run = async function() {
+  log.style.display = 'block';
+  log.innerHTML = '';
+  try {
+    append('正在连接数据库...');
+    const db = await openDB();
+    append('已连接，开始清理...');
+    await clearAllStores(db);
+    append('✅ 清理完成！页面将自动刷新...', 'ok');
+    setTimeout(() => location.href = 'http://localhost:9996/', 2000);
+  } catch(e) {
+    append('❌ 失败: ' + e.message, 'err');
+  }
+};
+</script>
+</body>
+</html>
